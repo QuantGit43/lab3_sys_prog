@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AST Viewer</title>
+<style>
+:root { --bg: #f7f7f5; --panel: #ffffff; --fg: #1d1d1f; --muted: #6b6b70; --line: #d8d8dc; --hl: #fff1b8; --link: #b9b9c0;
+        --decl: #3b6fd8; --stmt: #d9822b; --expr: #2f9e60; --leaf: #8a4fd0; --none: #999; }
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #17171a; --panel: #1f1f23; --fg: #e8e8ea; --muted: #9a9aa2; --line: #34343a; --hl: #4a4220; --link: #55555d; }
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: var(--bg); color: var(--fg); font: 14px/1.4 system-ui, sans-serif; }
+body { display: grid; grid-template-columns: minmax(260px, 32%) 1fr; grid-template-rows: auto 1fr; height: 100vh; }
+header { grid-column: 1 / -1; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; padding: 8px 16px; border-bottom: 1px solid var(--line); background: var(--panel); }
+header h1 { font-size: 16px; margin: 0 12px 0 0; }
+button { font: inherit; padding: 4px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); color: var(--fg); cursor: pointer; }
+button:hover { border-color: var(--muted); }
+.legend { display: flex; gap: 12px; margin-left: auto; color: var(--muted); font-size: 13px; }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 4px; vertical-align: -1px; }
+#src { margin: 0; overflow: auto; background: var(--panel); border-right: 1px solid var(--line); font: 13px/1.5 ui-monospace, Consolas, monospace; padding: 8px 0; }
+#src div { padding: 0 12px; white-space: pre; }
+#src div.on { background: var(--hl); }
+#src span { display: inline-block; width: 3ch; margin-right: 1.5ch; text-align: right; color: var(--muted); user-select: none; }
+#tree { width: 100%; height: 100%; display: block; cursor: grab; }
+.node circle { stroke-width: 2px; }
+.node text { font: 12px ui-monospace, Consolas, monospace; fill: var(--fg); paint-order: stroke; stroke: var(--bg); stroke-width: 3px; }
+.link { fill: none; stroke: var(--link); stroke-width: 1.5px; }
+@media (max-width: 700px) {
+  body { grid-template-columns: 1fr; grid-template-rows: auto 35vh 1fr; }
+  #src { border-right: 0; border-bottom: 1px solid var(--line); }
+  .legend { margin-left: 0; }
+}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+</head>
+<body>
+<header>
+  <h1 id="title">AST</h1>
+  <button id="expand">Розгорнути все</button>
+  <button id="collapse">Згорнути</button>
+  <button id="fit">Вмістити</button>
+  <div class="legend">
+    <span><i style="background:var(--decl)"></i>оголошення</span>
+    <span><i style="background:var(--stmt)"></i>оператори</span>
+    <span><i style="background:var(--expr)"></i>вирази</span>
+    <span><i style="background:var(--leaf)"></i>листки</span>
+  </div>
+</header>
+<pre id="src"></pre>
+<svg id="tree"></svg>
+<script>
+const DATA =
